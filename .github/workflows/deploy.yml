@@ -18,20 +18,20 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore GameServer
 
     - name: Build
       run: dotnet build --no-restore --configuration Release
 
     - name: Publish
-      run: dotnet publish GameServerAPI/GameServerAPI.csproj -c Release -o ./publish
+      run: dotnet publish GameServer/GameServer.csproj -c Release -o ./publish
 
     - name: Install EF Tool
       run: dotnet tool install --global dotnet-ef
 
     - name: Build EF Migration Bundle
       run: |
-        cd GameServerAPI
+        cd GameServer
         dotnet ef migrations bundle --self-contained -r linux-x64 -o ../publish/efbundle
 
     - name: Zip Release
