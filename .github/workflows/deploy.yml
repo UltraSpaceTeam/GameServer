@@ -17,35 +17,28 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # 1. Восстанавливаем зависимости (указываем папку, где лежит .sln)
     - name: Restore dependencies
       run: dotnet restore GameServer
 
-    # 2. Собираем (указываем папку, где лежит .sln)
     - name: Build
       run: dotnet build GameServer --no-restore --configuration Release
 
-    # 3. Публикуем (указываем конкретный .csproj)
     - name: Publish
       run: dotnet publish GameServer/GameServer.csproj -c Release -o ./publish
 
-    # 4. Ставим инструмент для миграций
     - name: Install EF Tool
-      run: dotnet tool install --global dotnet-ef
+      run: dotnet tool install --global dotnet-ef --version 8.*
 
-    # 5. Создаем Bundle миграций (указываем папку проекта, где лежит DbContext)
     - name: Build EF Migration Bundle
       run: |
         cd GameServer
         dotnet ef migrations bundle --self-contained -r linux-x64 -o ../publish/efbundle
 
-    # 6. Упаковываем в ZIP
     - name: Zip Release
       run: |
         cd publish
         zip -r ../GameServer.zip .
 
-    # 7. Создаем релиз на GitHub
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
