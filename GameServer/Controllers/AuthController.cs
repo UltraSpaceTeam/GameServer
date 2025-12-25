@@ -26,7 +26,7 @@ namespace GameServer.Controllers
             try
             {
                 if (await _context.Players.AnyAsync(p => p.Username == request.Username))
-                    return Unauthorized(new { error = "You cannot use this login" }); // 401 по ТЗ
+                    return Unauthorized(new { error = "You cannot use this login" });
 
                 var player = new Player
                 {
@@ -37,7 +37,6 @@ namespace GameServer.Controllers
                 _context.Players.Add(player);
                 await _context.SaveChangesAsync();
 
-                // Создаем пустую статистику
                 _context.Leaderboard.Add(new LeaderboardStat { PlayerId = player.Id });
                 await _context.SaveChangesAsync();
 
@@ -56,8 +55,13 @@ namespace GameServer.Controllers
         {
             var player = await _context.Players.FirstOrDefaultAsync(p => p.Username == request.Username);
 
-            if (player == null || !BCrypt.Net.BCrypt.Verify(request.Password, player.PasswordHash))
-                return Unauthorized(new { error = "Incorrect login/password" }); // 401 по ТЗ
+            if (player == null) {
+                return Unauthorized(new { error = "user not found" });
+            }
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, player.PasswordHash))
+            {
+                return Unauthorized(new { error = "Incorrect login/password" });
+            }
 
             var token = _tokenService.CreateToken(player);
             return Ok(new AuthResponse(token, player.Id, player.Username));
