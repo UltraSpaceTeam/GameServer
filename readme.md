@@ -206,4 +206,3 @@ JSON
     { "playerId": 5, "kills": 0, "deaths": 5 }
   ]
 }
-xx
