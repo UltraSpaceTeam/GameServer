@@ -1,7 +1,9 @@
-﻿using GameServer.Data;
+﻿using System.Security.Claims;
+using GameServer.Data;
 using GameServer.DTOs;
 using GameServer.Models;
 using GameServer.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,5 +68,38 @@ namespace GameServer.Controllers
             var token = _tokenService.CreateToken(player);
             return Ok(new AuthResponse(token, player.Id, player.Username));
         }
+
+        [HttpGet("verify")]
+        [Authorize]
+        public async Task<IActionResult> VerifyToken()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return Unauthorized(new { error = "Invalid token claims" });
+                }
+
+                var player = await _context.Players.FindAsync(userId);
+                if (player == null)
+                {
+                    return Unauthorized(new { error = "User does not exist" });
+                }
+
+                return Ok(new
+                {
+                    valid = true,
+                    player_id = player.Id,
+                    username = player.Username
+                });
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { error = "Token verification failed" });
+            }
+        }
     }
 }
+
