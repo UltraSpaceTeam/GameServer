@@ -65,7 +65,7 @@ namespace GameServer.Controllers
         public async Task<IActionResult> JoinGame()
         {
             var session = await _context.Games
-                .Where(g => g.State == GameState.Waiting && g.PlayerCount < g.MaxPlayers)
+                .Where(g => (g.State == GameState.Waiting || g.State == GameState.Playing) && g.PlayerCount < g.MaxPlayers)
                 .OrderByDescending(g => g.PlayerCount)
                 .FirstOrDefaultAsync();
 
