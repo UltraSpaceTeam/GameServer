@@ -1,50 +1,58 @@
-name: Build and Release
+name: Build and Publish Docker Image
 
 on:
   push:
     tags:
-      - 'v*' # Срабатывает только на теги (v1.0.0)
+      - 'v*'
 
-permissions:
-  contents: write
-  
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0.x
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Restore dependencies
-      run: dotnet restore GameServer
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
 
-    - name: Build
-      run: dotnet build GameServer --no-restore --configuration Release
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-    - name: Publish
-      run: dotnet publish GameServer/GameServer.csproj -c Release -o ./publish
-
-    - name: Install EF Tool
-      run: dotnet tool install --global dotnet-ef --version 8.*
-
-    - name: Build EF Migration Bundle
-      run: |
-        cd GameServer
-        dotnet ef migrations bundle --self-contained -r linux-x64 -o ../publish/efbundle
-
-    - name: Zip Release
-      run: |
-        cd publish
-        zip -r ../GameServer.zip .
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: GameServer.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  create-github-release:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
