@@ -115,16 +115,22 @@ namespace GameServer.Controllers
                 {
                     var stat = statsList.FirstOrDefault(s => s.PlayerId == result.PlayerId);
 
-                    if (stat != null)
+                    if (stat == null)
                     {
-                        stat.Kills += result.Kills;
-                        stat.Deaths += result.Deaths;
-                        stat.GamesPlayed += 1;
+                        stat = new LeaderboardStat
+                        {
+                            PlayerId = result.PlayerId,
+                            Kills = 0,
+                            Deaths = 0,
+                            GamesPlayed = 0
+                        };
+                        _context.Leaderboard.Add(stat);
+                        statsList.Add(stat);
                     }
-                    else
-                    {
-                        _logger.LogWarning($"Stats not found for player {result.PlayerId}");
-                    }
+
+                    stat.Kills += result.Kills;
+                    stat.Deaths += result.Deaths;
+                    stat.GamesPlayed += 1;
                 }
 
                 session.State = GameState.Finished;
