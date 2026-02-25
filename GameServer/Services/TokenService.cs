@@ -22,6 +22,7 @@ namespace GameServer.Services
 
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, player.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, player.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, player.Username),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
