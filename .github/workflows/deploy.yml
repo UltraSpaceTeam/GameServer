@@ -42,8 +42,7 @@ jobs:
             --logger "trx;LogFileName=test_results.trx" \
             --results-directory ./TestResults \
             --collect:"XPlat Code Coverage" \
-            /p:Exclude="[GameServer]GameServer.Migrations.*%2c[GameServer]GameServer.Program" \
-            /p:ExcludeByFile="**/Migrations/*.cs;**/obj/**/*.cs"
+            --settings ./coverlet.runsettings
 
       - name: Generate coverage report (HTML + Summary)
         uses: danielpalme/ReportGenerator-GitHub-Action@5
