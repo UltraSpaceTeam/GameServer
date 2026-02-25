@@ -14,7 +14,7 @@ env:
 
 jobs:
   tests:
-    name: Build + Test
+    name: Build + Test + Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -36,8 +36,32 @@ jobs:
           dotnet build ./GameServer/GameServer.csproj -c Release --no-restore
           dotnet build ./GameServer.Tests/GameServer.Tests.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test ./GameServer.Tests/GameServer.Tests.csproj -c Release --no-build --verbosity normal
+      - name: Test with coverage
+        run: |
+          dotnet test ./GameServer.Tests/GameServer.Tests.csproj -c Release --no-build --verbosity normal \
+            --logger "trx;LogFileName=test_results.trx" \
+            --results-directory ./TestResults \
+            --collect:"XPlat Code Coverage"
+
+      - name: Generate coverage report (HTML + Summary)
+        uses: danielpalme/ReportGenerator-GitHub-Action@5
+        with:
+          reports: "./TestResults/**/coverage.cobertura.xml"
+          targetdir: "./coveragereport"
+          reporttypes: "HtmlInline;Cobertura;MarkdownSummary"
+          title: "GameServer Coverage"
+          tag: "${{ github.run_number }}"
+
+      - name: Publish coverage summary
+        run: cat ./coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload test results + coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-and-coverage
+          path: |
+            ./TestResults
+            ./coveragereport
 
   build-and-push:
     name: Build and push Docker image
