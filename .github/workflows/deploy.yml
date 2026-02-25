@@ -27,13 +27,17 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore
-        run: dotnet restore
+        run: |
+          dotnet restore ./GameServer/GameServer.csproj
+          dotnet restore ./GameServer.Tests/GameServer.Tests.csproj
 
-      - name: Build (solution or all)
-        run: dotnet build -c Release --no-restore
+      - name: Build
+        run: |
+          dotnet build ./GameServer/GameServer.csproj -c Release --no-restore
+          dotnet build ./GameServer.Tests/GameServer.Tests.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test ./GameServer.Tests/GameServer.Tests.csproj -c Release --verbosity normal
+        run: dotnet test ./GameServer.Tests/GameServer.Tests.csproj -c Release --no-build --verbosity normal
 
   build-and-push:
     name: Build and push Docker image
