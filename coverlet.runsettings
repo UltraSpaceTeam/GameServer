@@ -6,6 +6,7 @@
         <Configuration>
           <Exclude>[GameServer]GameServer.Migrations.*</Exclude>
           <Exclude>[GameServer]GameServer.Program</Exclude>
+          <Exclude>[GameServer]*Program*</Exclude>
           <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
           <ExcludeByFile>**/obj/**/*.cs</ExcludeByFile>
         </Configuration>
