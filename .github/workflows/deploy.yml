@@ -56,6 +56,9 @@ jobs:
       - name: Publish coverage summary
         run: cat ./coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
 
+      - name: Publish API test summaries
+        run: python3 ./.github/scripts/publish_test_summary.py
+
       - name: Upload test results + coverage
         uses: actions/upload-artifact@v4
         with:
