@@ -56,62 +56,8 @@ jobs:
       - name: Publish coverage summary
         run: cat ./coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Publish integration test summary
-        run: |
-          python3 - <<'PY'
-          import os
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-
-          namespace = {"trx": "http://microsoft.com/schemas/VisualStudio/TeamTest/2010"}
-          trx_files = sorted(Path("TestResults").rglob("*.trx"))
-          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
-
-          lines = ["", "## Integration Tests"]
-
-          if not trx_files:
-              lines.append("No `.trx` files were found in `TestResults`.")
-          else:
-              totals = {"total": 0, "passed": 0, "failed": 0, "skipped": 0}
-
-              for trx_file in trx_files:
-                  root = ET.parse(trx_file).getroot()
-                  integration_test_ids = set()
-
-                  for unit_test in root.findall(".//trx:UnitTest", namespace):
-                      test_method = unit_test.find("trx:TestMethod", namespace)
-                      if test_method is None:
-                          continue
-
-                      class_name = test_method.attrib.get("className", "")
-                      if "GameServer.Tests.Integration." in class_name:
-                          integration_test_ids.add(unit_test.attrib["id"])
-
-                  for result in root.findall(".//trx:UnitTestResult", namespace):
-                      if result.attrib.get("testId") not in integration_test_ids:
-                          continue
-
-                      totals["total"] += 1
-                      outcome = result.attrib.get("outcome", "")
-
-                      if outcome == "Passed":
-                          totals["passed"] += 1
-                      elif outcome in {"Failed", "Error", "Timeout", "Aborted"}:
-                          totals["failed"] += 1
-                      else:
-                          totals["skipped"] += 1
-
-              pass_rate = 0.0 if totals["total"] == 0 else totals["passed"] / totals["total"] * 100
-
-              lines.extend([
-                  "| Total | Passed | Failed | Skipped | Pass rate |",
-                  "| --- | --- | --- | --- | --- |",
-                  f"| {totals['total']} | {totals['passed']} | {totals['failed']} | {totals['skipped']} | {pass_rate:.1f}% |",
-              ])
-
-          with summary_path.open("a", encoding="utf-8") as summary:
-              summary.write("\n".join(lines) + "\n")
-          PY
+      - name: Publish API test summaries
+        run: python3 ./.github/scripts/publish_test_summary.py
 
       - name: Upload test results + coverage
         uses: actions/upload-artifact@v4
